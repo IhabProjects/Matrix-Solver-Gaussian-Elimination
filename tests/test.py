@@ -1,13 +1,15 @@
+# Test file for the matrix solver
+# Tests if the upper triangular conversion works correctly
+
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils import input_matrix, make_upper_tree
 
+
 def test_matrix_operations():
-    #Test the matrix upper triangular conversion
-    
-    # Test with the test file
+    # tests the matrix conversion to upper triangular form
     matrix = []
     
     try:
@@ -17,13 +19,13 @@ def test_matrix_operations():
             print("Test Matrix - Original:")
             print_matrix(matrix)
             
-            # Convert to upper triangular
+            # Convert to upper triangular form
             make_upper_tree(matrix)
             
             print("\nTest Matrix - Upper Triangular:")
             print_matrix(matrix)
             
-            # Verify it's upper triangular
+            # Verify the result is upper triangular
             if is_upper_triangular(matrix):
                 print("\nTEST PASSED: Matrix is upper triangular")
             else:
@@ -33,16 +35,18 @@ def test_matrix_operations():
         print(f"TEST FAILED: {e}")
 
 def print_matrix(matrix):
-    """Pretty print the matrix"""
+    # prints the matrix nicely
     for row in matrix:
         print([f"{x:6.2f}" for x in row])
 
 def is_upper_triangular(matrix):
-    """Check if matrix is upper triangular"""
+    # checks if the matrix is upper triangular (zeros below diagonal)
     n = len(matrix)
+    tolerance = 1e-10  # Account for floating point errors
+    
     for i in range(n):
-        for j in range(i):
-            if abs(matrix[i][j]) > 1e-10:  # Account for floating point errors
+        for j in range(i):  # Check elements below diagonal
+            if abs(matrix[i][j]) > tolerance:
                 return False
     return True
 

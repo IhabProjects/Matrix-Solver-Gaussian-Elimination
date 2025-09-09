@@ -1,85 +1,99 @@
 def input_matrix(fh, matrix):
-   line_number = 0
-   for line in fh:
-       if line_number == 0:
-           # since our target 
-           n = int(line.strip())
-           rows = cols = n
-       else:
-           # take the  line make sure there is no whitespace then split the line into a list of integers which is the row
-           matrix.append(list(map(float, line.strip().split())))
-       line_number += 1
+    # reads the matrix from file
+    # first line is the size n, then n lines of matrix data
+    line_number = 0
+    for line in fh:
+        if line_number == 0:
+            # First line contains the matrix size
+            n = int(line.strip())
+            rows = cols = n
+        else:
+            # Parse each row: split by whitespace and convert to floats
+            matrix.append(list(map(float, line.strip().split())))
+        line_number += 1
 
 def find_first_non0(matrix, row, col):
-   n = len(matrix)
-   # Look for a non-zero element in the column starting from current row
-   for i in range(row + 1, n): 
-       if matrix[row][col] != 0:  # if current element is already non-zero, no need to swap
-           return 0  # No swap needed
-       elif matrix[i][col] != 0:  #looking for non-zero element to swap with
-           swap(matrix, row, i)
-           return 1 #means that we found a row that has the 0 in the col and that we swapped them
-   return 0
-
-def make_first_0(matrix, row, col): # the row and col is given cux matrix[row][col] is going to be mutliplied by something and added to the matrix[i][col], i have to multiply it by c = matrix[i][col] / matrix[row][col] 
-    # i have to make all the matrix[i][col] = 0 but not just like that it has to be by mathematical equation
+    # looks for a non-zero element in the column to use as pivot
+    # returns 1 if we swapped rows, 0 if no swap needed
     n = len(matrix)
     
-    # Make sure we have a non-zero pivot element
-    if matrix[row][col] == 0:
-        return  # Can't proceed if pivot is zero
+    # If current pivot is already non-zero, no swap needed
+    if matrix[row][col] != 0:
+        return 0
     
-    # For each row below the current row
+    # Look for a non-zero element in the column below current row
     for i in range(row + 1, n):
-        if matrix[i][col] != 0:  # Only process if element is non-zero
-            # Calculate the multiplier: c = matrix[i][col] / matrix[row][col]
+        if matrix[i][col] != 0:
+            swap(matrix, row, i)
+            return 1  # Swap was made
+    
+    return 0  # No non-zero element found
+
+def make_first_0(matrix, row, col):
+    # makes all elements below the pivot zero using row operations
+    # this is the main elimination step in gaussian elimination
+    n = len(matrix)
+    
+    # Ensure we have a non-zero pivot element
+    if matrix[row][col] == 0:
+        return  # Cannot proceed with zero pivot
+    
+    # For each row below the pivot row
+    for i in range(row + 1, n):
+        if matrix[i][col] != 0:  # Only process non-zero elements
+            # Calculate the elimination multiplier
             c = matrix[i][col] / matrix[row][col]
             
-            # For each column in the row, subtract c * pivot_row element
-            for j in range(col, n + 1):  # Start from col since previous elements should already be 0, include constant term
+            # Perform row operation: row_i = row_i - c * pivot_row
+            # Include the constant term (rightmost column) in elimination
+            for j in range(col, n + 1):
                 matrix[i][j] = matrix[i][j] - c * matrix[row][j]
 
 
 def swap(matrix, not0, is0):
-   matrix[not0], matrix[is0] = matrix[is0], matrix[not0]
+    # swaps two rows in the matrix
+    matrix[not0], matrix[is0] = matrix[is0], matrix[not0]
    
    
-def make_upper_tree(matrix): # it will call the make_first_0 as many times till we have our upper tree
+def make_upper_tree(matrix):
+    # converts the matrix to upper triangular form
+    # goes through each column and eliminates elements below the diagonal
     n = len(matrix)
     
-    # For each column (and corresponding diagonal element)
-    for j in range(n - 1):  # Don't need to process last column
-        # Try to get a non-zero pivot at matrix[j][j]
+    # Process each column (except the last one)
+    for j in range(n - 1):
+        # Ensure we have a non-zero pivot at position [j][j]
         if find_first_non0(matrix, j, j) == 0 and matrix[j][j] == 0:
-            # If we can't find a non-zero element to swap, matrix might be singular
-            continue  # or handle this case as needed
+            # If no non-zero element found, matrix may be singular
+            continue  # Skip this column
         
-        # Make all elements below the pivot zero
+        # Eliminate all elements below the pivot
         make_first_0(matrix, j, j)
         
         
-def back_substitute(matrix): # takes the upper triangular matrix and solves for x values using back substitution
-    # get the size of the matrix (n x n system)
+def back_substitute(matrix):
+    # solves the upper triangular system using back substitution
+    # starts from the bottom and works its way up
     n = len(matrix)
     
-    # create a list to store our solutions
+    # Initialize solution vector
     x = [0.0] * n
     
-    # start from the bottom row and work our way up
+    # Solve from bottom row to top row
     for i in range(n - 1, -1, -1):
-        # check if the diagonal element is zero (can't divide by zero)
+        # Check for zero diagonal element (singular matrix)
         if matrix[i][i] == 0:
-            print("Error: Can't solve - diagonal element is zero")
+            print("Error: Cannot solve - diagonal element is zero")
             return None
         
-        # start with the constant term (the rightmost column)
+        # Start with the constant term (rightmost column)
         x[i] = matrix[i][n]
         
-        # subtract all the known variables (the ones we already solved for)
+        # Subtract contributions from already-solved variables
         for j in range(i + 1, n):
             x[i] = x[i] - matrix[i][j] * x[j]
         
-        # divide by the coefficient of the current variable
+        # Divide by the coefficient of the current variable
         x[i] = x[i] / matrix[i][i]
     
     return x
